@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  phone     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+
+  meters    UserMeter[]
+}
+
+model UserMeter {
+  id              String   @id @default(uuid())
+  userId          String
+  utilityType     UtilityType
+  billingType     BillingType
+  providerType    ProviderType
+  providerName    String
+  identifierType  IdentifierType
+  identifierValue String
+  balance         Float?
+  createdAt       DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  meterId   String
+  amount    Float
+  status    TransactionStatus
+  reference String
+  createdAt DateTime @default(now())
+
+  meter UserMeter @relation(fields: [meterId], references: [id])
+  token Token?
+}
+
+model Token {
+  id            String   @id @default(uuid())
+  transactionId String   @unique
+  tokenValue    String
+  units         Float
+  createdAt     DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+}
+
+enum UtilityType {
+  ELECTRICITY
+  WATER
+}
+
+enum BillingType {
+  PREPAID
+  POSTPAID
+}
+
+enum ProviderType {
+  UTILITY
+  SUB_METER_VENDOR
+}
+
+enum IdentifierType {
+  METER_NUMBER
+  ACCOUNT_NUMBER
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
